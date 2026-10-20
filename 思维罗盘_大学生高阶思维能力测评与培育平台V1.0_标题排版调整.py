@@ -9,25 +9,18 @@ import io
 from datetime import datetime
 from collections import Counter
 from html import escape
-
 import streamlit as st
 import plotly.graph_objects as go
-
-
-# =========================================================
 # App
-# =========================================================
 APP_TITLE = "思维罗盘——大学生高阶思维能力测评与培育平台V1.0"
 APP_SUBTITLE = "看见你的思维优势，找到下一步成长方向"
 AI_REPORT_VERSION = 4
-
 st.set_page_config(
     page_title=APP_TITLE,
     page_icon="✦",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
-
 st.markdown(
     """
     <style>
@@ -605,7 +598,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
 QUESTIONS = [
     {"dimension": "批判性思维能力", "text": "在面对生成式 AI 提供的信息时，我会有意识地判断其准确性和可靠性。", "reverse": False},
     {"dimension": "创造性思维能力", "text": "使用 AI 时，我常常会被它给出的现成思路限制，很难再从新的角度产生自己的想法。", "reverse": True},
@@ -631,7 +623,6 @@ QUESTIONS = [
     {"dimension": "批判性思维能力", "text": "即使 AI 已经给出了一个现成答案，我通常也不会再独立追问问题的本质或重新思考其推理过程。", "reverse": True},
     {"dimension": "创造性思维能力", "text": "AI 提供的灵感能够帮助我打破思维定势，从新的角度思考问题。", "reverse": False},
 ]
-
 DIMENSIONS = [
     "批判性思维能力",
     "创造性思维能力",
@@ -641,7 +632,6 @@ DIMENSIONS = [
     "元认知能力",
     "计算思维能力",
 ]
-
 DIMENSION_INFO = {
     "批判性思维能力": {
         "icon": "🔎",
@@ -715,14 +705,11 @@ DIMENSION_INFO = {
     },
 }
 
-
 def mean(values):
     return sum(values) / len(values) if values else 0.0
 
-
 def to_ten_point(likert_mean):
     return round((likert_mean - 1) / 4 * 10, 2)
-
 
 def score_level(score):
     if score >= 9.0:
@@ -739,7 +726,6 @@ def score_level(score):
         return "发展中"
     return "成长空间较大"
 
-
 def dimension_status(score):
     if score >= 8.5:
         return "优势突出"
@@ -750,7 +736,6 @@ def dimension_status(score):
     if score >= 4.0:
         return "仍有提升空间"
     return "建议优先加强"
-
 
 def overall_interpretation(score, spread):
     if score >= 8.5:
@@ -763,23 +748,19 @@ def overall_interpretation(score, spread):
         base = "你的高阶思维能力正在发展中。你已经表现出部分有效做法，下一步需要把零散习惯逐渐变成稳定策略。"
     else:
         base = "当前结果显示，你在 AI 辅助学习中的高阶思维策略使用相对有限，适合先从最需要加强的 1—2 个方向开始。"
-
     if spread < 1.2:
         structure = " 七个维度之间差距较小，整体结构比较均衡。"
     elif spread < 2.5:
         structure = " 不同维度之间存在一定差异，你已经形成部分优势，同时也有明确的提升方向。"
     else:
         structure = " 不同维度之间差异较明显，优先补强短板会比平均用力更有效。"
-
     return base + structure
-
 
 def make_alternating_order():
     positive = [i for i, q in enumerate(QUESTIONS) if not q["reverse"]]
     negative = [i for i, q in enumerate(QUESTIONS) if q["reverse"]]
     random.shuffle(positive)
     random.shuffle(negative)
-
     order = []
     for i in range(max(len(positive), len(negative))):
         if i < len(positive):
@@ -788,12 +769,10 @@ def make_alternating_order():
             order.append(negative[i])
     return order
 
-
 def save_answer(idx):
     widget_key = f"_widget_q_{idx}"
     if widget_key in st.session_state:
         st.session_state.answers[idx] = st.session_state[widget_key]
-
 
 def build_scores():
     dim_raw = {d: [] for d in DIMENSIONS}
@@ -816,31 +795,24 @@ def build_scores():
                 "scored_likert": scored_value,
             }
         )
-
     dim_scores = {d: to_ten_point(mean(dim_raw[d])) for d in DIMENSIONS}
     overall = round(mean(list(dim_scores.values())), 2)
     return overall, dim_scores, item_results
-
 
 def response_quality():
     answers = list(st.session_state.answers.values())
     if not answers:
         return []
-
     notices = []
     counts = Counter(answers)
     most_common_ratio = max(counts.values()) / len(answers)
-
     if len(answers) >= 15 and most_common_ratio >= 0.80:
         notices.append("你的选择较为集中，建议结合真实学习经历再次确认部分题目。")
-
     if "survey_start_time" in st.session_state and len(answers) == len(QUESTIONS):
         elapsed = time.time() - st.session_state.survey_start_time
         if elapsed < 60:
             notices.append("本次完成速度较快，若有题目未仔细阅读，可以重新测评后再对比结果。")
-
     return notices
-
 
 def build_report_text(overall, dim_scores, item_results):
     ranked = sorted(dim_scores.items(), key=lambda x: x[1], reverse=True)
@@ -850,7 +822,6 @@ def build_report_text(overall, dim_scores, item_results):
         item_results,
         key=lambda x: (x["scored_likert"], x["index"])
     )[:3]
-
     lines = [
         f"{APP_TITLE}｜个人报告",
         "=" * 34,
@@ -859,24 +830,19 @@ def build_report_text(overall, dim_scores, item_results):
         "",
         "一、能力画像",
     ]
-
     for d in DIMENSIONS:
         lines.append(f"- {d}：{dim_scores[d]:.2f}/10")
-
     lines.extend(["", "二、优势方向"])
     for d, s in strengths:
         lines.append(f"- {d}（{s:.2f}/10）：{DIMENSION_INFO[d]['meaning']}")
-
     lines.extend(["", "三、优先提升方向"])
     for d, s in priorities:
         lines.append(f"- {d}（{s:.2f}/10）")
         for tip in DIMENSION_INFO[d]["tips"]:
             lines.append(f"  · {tip}")
-
     lines.extend(["", "四、值得关注的具体行为"])
     for x in lowest_items:
         lines.append(f"- [{x['dimension']}] {x['text']}")
-
     lines.extend(
         [
             "",
@@ -884,10 +850,7 @@ def build_report_text(overall, dim_scores, item_results):
             "本报告反映的是你在 AI 辅助学习情境中的自我感知与行为倾向，可用于自我了解和学习改进。",
         ]
     )
-
     return "\n".join(lines)
-
-
 LIKERT_LABELS = {
     1: "完全不符合",
     2: "比较不符合",
@@ -895,8 +858,6 @@ LIKERT_LABELS = {
     4: "比较符合",
     5: "完全符合",
 }
-
-
 def get_app_secret(name, default=None):
     """优先读取 Streamlit Secrets，其次读取环境变量。"""
     try:
@@ -906,7 +867,6 @@ def get_app_secret(name, default=None):
     except Exception:
         pass
     return os.getenv(name, default)
-
 
 def item_strength_label(scored_likert):
     """内部用于给 AI 理解题项方向，不直接展示评分机制。"""
@@ -920,10 +880,8 @@ def item_strength_label(scored_likert):
         return "需要提升"
     return "优先关注"
 
-
 def build_ai_assessment_context(overall, dim_scores, item_results):
     ranked = sorted(dim_scores.items(), key=lambda x: x[1], reverse=True)
-
     lines = [
         "【综合结果】",
         f"综合思维指数：{overall:.2f}/10",
@@ -931,10 +889,8 @@ def build_ai_assessment_context(overall, dim_scores, item_results):
         "",
         "【七维得分】",
     ]
-
     for d, s in ranked:
         lines.append(f"- {d}：{s:.2f}/10")
-
     lines.extend(
         [
             "",
@@ -942,7 +898,6 @@ def build_ai_assessment_context(overall, dim_scores, item_results):
             "说明：下面的“能力表现强度”已经按题目含义统一为 1—5，5 表示该能力行为更稳定，1 表示更需要关注。",
         ]
     )
-
     for i, x in enumerate(item_results, start=1):
         raw = x["raw_likert"]
         scored = x["scored_likert"]
@@ -952,9 +907,7 @@ def build_ai_assessment_context(overall, dim_scores, item_results):
             f"用户选择：{raw}/5（{LIKERT_LABELS[raw]}）；"
             f"能力表现强度：{scored}/5（{item_strength_label(scored)}）"
         )
-
     return "\n".join(lines)
-
 
 def build_local_personalized_report(overall, dim_scores, item_results):
     """
@@ -970,7 +923,6 @@ def build_local_personalized_report(overall, dim_scores, item_results):
         item_results,
         key=lambda x: (x["scored_likert"], dim_scores[x["dimension"]], x["index"])
     )[:4]
-
     # 找同一维度内部差异较大的维度
     by_dim = {d: [] for d in DIMENSIONS}
     for x in item_results:
@@ -981,7 +933,6 @@ def build_local_personalized_report(overall, dim_scores, item_results):
         if vals and max(vals) - min(vals) >= 2:
             mixed_dims.append((d, max(vals) - min(vals)))
     mixed_dims.sort(key=lambda x: x[1], reverse=True)
-
     strongest_dim = ranked_dims[0]
     weakest_dim = ranked_dims[-1]
 
@@ -1072,7 +1023,6 @@ def build_local_personalized_report(overall, dim_scores, item_results):
 
     return "\n".join(lines)
 
-
 def generate_ai_personalized_report(overall, dim_scores, item_results):
     """
     返回 (report, source)
@@ -1080,19 +1030,14 @@ def generate_ai_personalized_report(overall, dim_scores, item_results):
     """
     api_key = get_app_secret("OPENAI_API_KEY")
     model = get_app_secret("OPENAI_MODEL", "gpt-5.6-luna")
-
     if not api_key:
         return build_local_personalized_report(overall, dim_scores, item_results), "fallback"
-
     try:
         from openai import OpenAI
-
         client = OpenAI(api_key=api_key)
-
         assessment_context = build_ai_assessment_context(
             overall, dim_scores, item_results
         )
-
         instructions = """
 你是一名面向大学生的“高阶思维学习策略顾问”。你的任务是依据一份生成式AI学习情境下的高阶思维测评结果，
 生成真正个性化、可执行的中文反馈。
@@ -1131,11 +1076,8 @@ def generate_ai_personalized_report(overall, dim_scores, item_results):
 
 ### 1. 建议标题
 **对应的本次作答：** ……
-
 **下一次具体怎么做：** ……
-
 **可以直接复制的 AI 提问示例：** ……
-
 ### 2. 建议标题
 ……
 
@@ -1182,22 +1124,13 @@ def assessment_signature():
     """用于避免 Streamlit 每次 rerun 都重新调用 AI；版本升级时自动刷新旧报告。"""
     return (AI_REPORT_VERSION, tuple(sorted(st.session_state.answers.items())))
 
-
-
-# =========================================================
-
-# =========================================================
 # Local database / system management
-# =========================================================
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sixiangluopan.db")
 ADMIN_PASSWORD = get_app_secret("ADMIN_PASSWORD", "123456")
-
-
 def db_connect():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
-
 
 def init_db():
     conn = db_connect()
@@ -1233,7 +1166,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-
 def upsert_student(student_no, name, school, major, grade):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn = db_connect()
@@ -1257,7 +1189,6 @@ def upsert_student(student_no, name, school, major, grade):
     conn.close()
     return dict(row)
 
-
 def get_student_by_no(student_no):
     conn = db_connect()
     row = conn.execute(
@@ -1266,7 +1197,6 @@ def get_student_by_no(student_no):
     conn.close()
     return dict(row) if row else None
 
-
 def get_student(student_id):
     conn = db_connect()
     row = conn.execute(
@@ -1274,7 +1204,6 @@ def get_student(student_id):
     ).fetchone()
     conn.close()
     return dict(row) if row else None
-
 
 def save_assessment(student_id, overall, dim_scores, answers, report, report_source):
     assessed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1301,7 +1230,6 @@ def save_assessment(student_id, overall, dim_scores, answers, report, report_sou
     conn.close()
     return assessment_id
 
-
 def get_student_assessments(student_id):
     conn = db_connect()
     rows = conn.execute(
@@ -1314,7 +1242,6 @@ def get_student_assessments(student_id):
     ).fetchall()
     conn.close()
     return [dict(row) for row in rows]
-
 
 def get_assessment(assessment_id):
     """获取单次测评详情，并同时带出学生档案信息。"""
@@ -1336,7 +1263,6 @@ def get_assessment(assessment_id):
     conn.close()
     return dict(row) if row else None
 
-
 def get_all_students():
     conn = db_connect()
     rows = conn.execute(
@@ -1353,7 +1279,6 @@ def get_all_students():
     conn.close()
     return [dict(row) for row in rows]
 
-
 def get_all_assessments():
     conn = db_connect()
     rows = conn.execute(
@@ -1367,14 +1292,12 @@ def get_all_assessments():
     conn.close()
     return [dict(row) for row in rows]
 
-
 def delete_student(student_id):
     conn = db_connect()
     conn.execute("DELETE FROM assessments WHERE student_id = ?", (student_id,))
     conn.execute("DELETE FROM students WHERE id = ?", (student_id,))
     conn.commit()
     conn.close()
-
 
 def update_student(student_id, student_no, name, school, major, grade):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1403,7 +1326,6 @@ def update_student(student_id, student_no, name, school, major, grade):
     finally:
         conn.close()
 
-
 def make_csv(rows, columns):
     output = io.StringIO()
     writer = csv.writer(output)
@@ -1411,7 +1333,6 @@ def make_csv(rows, columns):
     for row in rows:
         writer.writerow([row.get(key, "") for key, _ in columns])
     return output.getvalue().encode("utf-8-sig")
-
 
 def assessment_rows_for_export(rows):
     result = []
@@ -1435,43 +1356,29 @@ def assessment_rows_for_export(rows):
 
 init_db()
 
-
-# =========================================================
 # State
-# =========================================================
 if "stage" not in st.session_state:
     st.session_state.stage = "intro"
-
 if "page" not in st.session_state:
     st.session_state.page = 0
-
 if "answers" not in st.session_state:
     st.session_state.answers = {}
-
 if "question_order" not in st.session_state:
     st.session_state.question_order = make_alternating_order()
-
 if "ai_report" not in st.session_state:
     st.session_state.ai_report = None
-
 if "ai_report_signature" not in st.session_state:
     st.session_state.ai_report_signature = None
-
 if "ai_report_source" not in st.session_state:
     st.session_state.ai_report_source = None
-
 if "saved_assessment_id" not in st.session_state:
     st.session_state.saved_assessment_id = None
-
 if "student_id" not in st.session_state:
     st.session_state.student_id = None
-
 if "admin_authed" not in st.session_state:
     st.session_state.admin_authed = False
-
 if "history_selected_id" not in st.session_state:
     st.session_state.history_selected_id = None
-
 
 def reset_survey_state():
     for key in list(st.session_state.keys()):
@@ -1486,7 +1393,6 @@ def reset_survey_state():
     st.session_state.ai_report_source = None
     st.session_state.saved_assessment_id = None
     st.session_state.pop("survey_start_time", None)
-
 
 def student_header():
     student = get_student(st.session_state.student_id) if st.session_state.student_id else None
@@ -1508,31 +1414,26 @@ def student_header():
         unsafe_allow_html=True,
     )
 
-
 def show_student_navigation():
     if not st.session_state.student_id:
         return
 
     st.markdown('<div class="system-badge">✦ 学生端</div>', unsafe_allow_html=True)
     n1, n2, n3, n4 = st.columns(4)
-
     with n1:
         if st.button("📝 开始测评", use_container_width=True):
             reset_survey_state()
             st.session_state.stage = "survey"
             st.session_state.survey_start_time = time.time()
             st.rerun()
-
     with n2:
         if st.button("📈 成长记录", use_container_width=True):
             st.session_state.stage = "history"
             st.rerun()
-
     with n3:
         if st.button("👤 我的档案", use_container_width=True):
             st.session_state.stage = "profile"
             st.rerun()
-
     with n4:
         if st.button("退出学生端", use_container_width=True):
             st.session_state.student_id = None
@@ -1540,10 +1441,7 @@ def show_student_navigation():
             reset_survey_state()
             st.rerun()
 
-
-# =========================================================
 # Home / Student Profile
-# =========================================================
 if st.session_state.stage == "intro":
     if st.session_state.student_id:
         student_header()
@@ -1691,10 +1589,7 @@ if st.session_state.stage == "intro":
             st.markdown("📝 **行为级反馈**：定位到具体学习习惯")
             st.markdown("📈 **成长记录**：保存每次测评并观察变化")
 
-
-# =========================================================
 # Student Profile
-# =========================================================
 elif st.session_state.stage == "profile":
     if not st.session_state.student_id:
         st.session_state.stage = "intro"
@@ -1767,10 +1662,7 @@ elif st.session_state.stage == "profile":
             unsafe_allow_html=True,
         )
 
-
-# =========================================================
 # Student History / Growth
-# =========================================================
 elif st.session_state.stage == "history":
     if not st.session_state.student_id:
         st.session_state.stage = "intro"
@@ -1873,10 +1765,7 @@ elif st.session_state.stage == "history":
             use_container_width=True,
         )
 
-
-# =========================================================
 # Survey
-# =========================================================
 elif st.session_state.stage == "survey":
     if not st.session_state.student_id:
         st.session_state.stage = "intro"
@@ -1979,10 +1868,7 @@ elif st.session_state.stage == "survey":
     if not page_complete:
         st.caption("完成本页全部题目后即可继续。")
 
-
-# =========================================================
 # Result
-# =========================================================
 elif st.session_state.stage == "result":
     if not st.session_state.student_id:
         st.session_state.stage = "intro"
@@ -2284,10 +2170,7 @@ elif st.session_state.stage == "result":
         "本测评用于了解 AI 辅助学习情境中的思维特点与学习行为，可作为自我了解与学习改进的参考。"
     )
 
-
-# =========================================================
 # Admin
-# =========================================================
 elif st.session_state.stage == "admin":
     st.markdown(
         """
